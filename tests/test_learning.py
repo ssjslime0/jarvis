@@ -147,3 +147,76 @@ def test_author_disabled_returns_none():
             dataset=TrainingDataset(os.path.join(tmp, "pairs.jsonl")),
         )
         assert author.handle("remember I like tea", query="remember I like tea") is None
+
+
+def test_implicit_correction_captured_with_prior_reply():
+    with tempfile.TemporaryDirectory() as tmp:
+        store = LearnedStore(os.path.join(tmp, "learned.json"))
+        ds = TrainingDataset(os.path.join(tmp, "pairs.jsonl"))
+        author = LearningAuthor(store=store, dataset=ds)
+        reply = author.handle(
+            "actually, just say the time plainly",
+            query="what is the time",
+            last_reply="The current time is 3pm, a fine hour indeed.",
+        )
+        assert reply is not None
+        assert len(ds.all()) == 1
+        assert "time plainly" in ds.all()[0]["chosen"]
+        assert ds.all()[0]["rejected"] == "The current time is 3pm, a fine hour indeed."
+
+
+def test_implicit_correction_strips_lead_in():
+    with tempfile.TemporaryDirectory() as tmp:
+        store = LearnedStore(os.path.join(tmp, "learned.json"))
+        ds = TrainingDataset(os.path.join(tmp, "pairs.jsonl"))
+        author = LearningAuthor(store=store, dataset=ds)
+        author.handle(
+            "instead, tell me the weather",
+            query="what should I know",
+            last_reply="Here is the news.",
+        )
+        assert ds.all()[0]["chosen"] == "tell me the weather"
+
+
+def test_implicit_correction_not_triggered_without_prior_reply():
+    with tempfile.TemporaryDirectory() as tmp:
+        store = LearnedStore(os.path.join(tmp, "learned.json"))
+        ds = TrainingDataset(os.path.join(tmp, "pairs.jsonl"))
+        author = LearningAuthor(store=store, dataset=ds)
+        reply = author.handle(
+            "actually, the meeting moved to 4",
+            query="actually, the meeting moved to 4",
+            last_reply="",
+        )
+        assert reply is None
+        assert ds.all() == []
+
+
+def test_implicit_correction_not_triggered_on_question():
+    with tempfile.TemporaryDirectory() as tmp:
+        store = LearnedStore(os.path.join(tmp, "learned.json"))
+        ds = TrainingDataset(os.path.join(tmp, "pairs.jsonl"))
+        author = LearningAuthor(store=store, dataset=ds)
+        reply = author.handle(
+            "actually, what time is the meeting?",
+            query="actually, what time is the meeting?",
+            last_reply="The meeting is at 3.",
+        )
+        assert reply is None
+        assert ds.all() == []
+
+
+def test_implicit_correction_disabled_flag():
+    with tempfile.TemporaryDirectory() as tmp:
+        store = LearnedStore(os.path.join(tmp, "learned.json"))
+        ds = TrainingDataset(os.path.join(tmp, "pairs.jsonl"))
+        author = LearningAuthor(
+            implicit_corrections_enabled=False, store=store, dataset=ds
+        )
+        reply = author.handle(
+            "actually, just say the time",
+            query="what is the time",
+            last_reply="The time is 3pm.",
+        )
+        assert reply is None
+        assert ds.all() == []

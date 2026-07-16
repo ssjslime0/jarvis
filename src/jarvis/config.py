@@ -115,6 +115,7 @@ class Settings:
     # Skill system + chat-driven learning
     skill_system_enabled: bool  # Load skills from ~/.jarvis/skills and inject on match
     learning_enabled: bool  # Intercept teaching utterances (remember / create skill / correct)
+    implicit_corrections_enabled: bool  # Capture feedback on a prior reply as a correction pair
     skills_dir: str  # Directory scanned for skill files
 
     # Text-to-Speech
@@ -614,6 +615,7 @@ def get_default_config() -> Dict[str, Any]:
         # Skill system + chat-driven learning (all off by default)
         "skill_system_enabled": False,
         "learning_enabled": False,
+        "implicit_corrections_enabled": True,  # Sub-mode of learning_enabled
         "skills_dir": "",  # Empty -> default ~/.jarvis/skills
 
         # MCP Integration (external servers Jarvis can use). No defaults.
@@ -842,6 +844,7 @@ def load_settings() -> Settings:
     dictation_markdown_mode = bool(merged.get("dictation_markdown_mode", False))
     skill_system_enabled = bool(merged.get("skill_system_enabled", False))
     learning_enabled = bool(merged.get("learning_enabled", False))
+    implicit_corrections_enabled = bool(merged.get("implicit_corrections_enabled", True))
     skills_dir = str(merged.get("skills_dir", "") or "").strip()
     mcps = _ensure_dict(merged.get("mcps"))
     whisper_min_confidence = float(merged.get("whisper_min_confidence", 0.4))
@@ -995,6 +998,7 @@ def load_settings() -> Settings:
         # Skill system + chat-driven learning
         skill_system_enabled=skill_system_enabled,
         learning_enabled=learning_enabled,
+        implicit_corrections_enabled=implicit_corrections_enabled,
         skills_dir=skills_dir,
 
         # MCP Integration

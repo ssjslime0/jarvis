@@ -869,6 +869,9 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
 
             _author = LearningAuthor(
                 enabled=True,
+                implicit_corrections_enabled=getattr(
+                    cfg, "implicit_corrections_enabled", True
+                ),
                 skills_dir=getattr(cfg, "skills_dir", ""),
             )
             _last_reply = ""

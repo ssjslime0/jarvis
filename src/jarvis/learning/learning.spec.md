@@ -37,7 +37,14 @@ learned-instructions block is also injected into the system prompt when
 
 ## Roadmap
 
-- Phase 2: implicit correction capture (no explicit "better:" prefix).
+- Phase 2 (implemented): implicit correction capture. When there is a prior
+  reply and the user's message reads as feedback on it (e.g. "actually, ...",
+  "you're wrong, ...", "I meant ...", "instead, ...", "shorter next time")
+  without being a fresh question, it is captured as a correction pair (chosen =
+  the user's phrasing with the lead-in stripped, rejected = the prior reply).
+  Gated behind `implicit_corrections_enabled` (default true) and only fires
+  with a non-empty prior reply and a non-question utterance, to keep false
+  positives low on a small model.
 - Phase 3: a local fine-tune script (`scripts/finetune_lora.py`) that consumes
   `training_pairs.jsonl` to produce a custom `gemma2:2b` variant reloaded into
   Ollama.
