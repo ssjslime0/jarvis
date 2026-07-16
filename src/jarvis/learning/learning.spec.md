@@ -45,9 +45,13 @@ learned-instructions block is also injected into the system prompt when
   Gated behind `implicit_corrections_enabled` (default true) and only fires
   with a non-empty prior reply and a non-question utterance, to keep false
   positives low on a small model.
-- Phase 3: a local fine-tune script (`scripts/finetune_lora.py`) that consumes
-  `training_pairs.jsonl` to produce a custom `gemma2:2b` variant reloaded into
-  Ollama.
+- Phase 3 (implemented): `scripts/finetune_lora.py` reads `training_pairs.jsonl`
+  and prepares trainer-ready datasets (llama.cpp JSONL, HF SFT JSONL, HF DPO
+  JSONL), then orchestrates a local fine-tune. The data-prep step is
+  stdlib-only and fail-open; training delegates to a backend you supply
+  (``llama.cpp finetune`` for GGUF/CPU, or HuggingFace PEFT when installed).
+  With no trainer present it still prepares the data and prints the exact
+  command. It is dependency-light and offline-first by design.
 
 ## Constraints
 
