@@ -112,6 +112,11 @@ class Settings:
     screen_awareness_ocr: bool  # Include OCR'd visible text (requires Tesseract)
     screen_awareness_max_text_chars: int  # Max OCR characters included in context
 
+    # Skill system + chat-driven learning
+    skill_system_enabled: bool  # Load skills from ~/.jarvis/skills and inject on match
+    learning_enabled: bool  # Intercept teaching utterances (remember / create skill / correct)
+    skills_dir: str  # Directory scanned for skill files
+
     # Text-to-Speech
     tts_enabled: bool
     tts_engine: str  # "piper" (default) or "chatterbox"
@@ -606,6 +611,11 @@ def get_default_config() -> Dict[str, Any]:
         "dictation_custom_dictionary": [],
         "dictation_markdown_mode": False,  # Convert spoken structural cues into Markdown
 
+        # Skill system + chat-driven learning (all off by default)
+        "skill_system_enabled": False,
+        "learning_enabled": False,
+        "skills_dir": "",  # Empty -> default ~/.jarvis/skills
+
         # MCP Integration (external servers Jarvis can use). No defaults.
         "mcps": {},
     }
@@ -830,6 +840,9 @@ def load_settings() -> Settings:
     raw_dict = merged.get("dictation_custom_dictionary", [])
     dictation_custom_dictionary = list(raw_dict) if isinstance(raw_dict, list) else []
     dictation_markdown_mode = bool(merged.get("dictation_markdown_mode", False))
+    skill_system_enabled = bool(merged.get("skill_system_enabled", False))
+    learning_enabled = bool(merged.get("learning_enabled", False))
+    skills_dir = str(merged.get("skills_dir", "") or "").strip()
     mcps = _ensure_dict(merged.get("mcps"))
     whisper_min_confidence = float(merged.get("whisper_min_confidence", 0.4))
     whisper_no_speech_threshold = float(merged.get("whisper_no_speech_threshold", 0.5))
@@ -978,6 +991,11 @@ def load_settings() -> Settings:
         dictation_filler_removal=dictation_filler_removal,
         dictation_custom_dictionary=dictation_custom_dictionary,
         dictation_markdown_mode=dictation_markdown_mode,
+
+        # Skill system + chat-driven learning
+        skill_system_enabled=skill_system_enabled,
+        learning_enabled=learning_enabled,
+        skills_dir=skills_dir,
 
         # MCP Integration
         mcps=mcps,

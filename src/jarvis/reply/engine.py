@@ -859,6 +859,29 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     Returns:
         Generated reply text or None
     """
+    # Step 0: Chat-driven learning interception. If the user is teaching
+    # Jarvis (remember / create a skill / correct), handle it and return a
+    # short confirmation instead of running a full reply. Fail-open: any
+    # error here falls through to normal generation.
+    if getattr(cfg, "learning_enabled", False) and text:
+        try:
+            from ..learning.author import LearningAuthor
+
+            _author = LearningAuthor(
+                enabled=True,
+                skills_dir=getattr(cfg, "skills_dir", ""),
+            )
+            _last_reply = ""
+            if dialogue_memory and hasattr(dialogue_memory, "get_recent_messages"):
+                _recent = dialogue_memory.get_recent_messages()
+                if _recent:
+                    _last_reply = _recent[-1].get("content", "") if isinstance(_recent[-1], dict) else ""
+            _auth_reply = _author.handle(text, query=text, last_reply=_last_reply)
+            if _auth_reply:
+                return _auth_reply
+        except Exception as exc:
+            debug_log(f"learning interception failed: {exc}", "learning")
+
     # Step 1: Redact sensitive information
     redacted = redact(text)
 
@@ -1495,6 +1518,30 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
 
     def _build_initial_system_message() -> str:
         guidance = [_persona_prompt.strip()]
+
+        # Skills + learned instructions: on-demand capability the user has
+        # taught Jarvis through chat. Matched against the current query so a
+        # small model only sees relevant context (keeps the prompt small).
+        if getattr(cfg, "skill_system_enabled", False):
+            try:
+                from ..skills.manager import SkillManager
+
+                _skill_ctx = SkillManager(
+                    skills_dir=getattr(cfg, "skills_dir", ""), enabled=True
+                ).build_skill_context(text or "")
+                if _skill_ctx:
+                    guidance.append("\n" + _skill_ctx)
+            except Exception as exc:
+                debug_log(f"skill context build failed: {exc}", "skills")
+        if getattr(cfg, "learning_enabled", False):
+            try:
+                from ..learning.store import LearnedStore
+
+                _learned_ctx = LearnedStore().build_context()
+                if _learned_ctx:
+                    guidance.append("\n" + _learned_ctx)
+            except Exception as exc:
+                debug_log(f"learned context build failed: {exc}", "learning")
 
         # Add model-size-appropriate prompt components
         guidance.extend(prompts.to_list())

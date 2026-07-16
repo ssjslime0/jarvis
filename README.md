@@ -175,6 +175,7 @@ Jarvis starts listening automatically — just say "Jarvis" and talk!
 - **Plugin Command System** - Extend Jarvis with your own tools via a simple ``@tool`` decorator; plugins are auto-discovered from ``~/.jarvis/plugins/``
 - **Screen Awareness** - Opt-in context from the active window title and (optionally) OCR'd screen text, so Jarvis can see what you're looking at
 - **MCP Integration** - Connect to thousands of external tools (Home Assistant, GitHub, Slack, etc.)
+- **Chat-Driven Learning** - Teach Jarvis through chat: "remember that...", "create a skill: ...", or correct it and capture pairs for later fine-tuning. Skills and learned instructions persist locally and are injected on demand, so a small local model grows capability without bigger hardware (off by default; enable with `learning_enabled: true` and `skill_system_enabled: true`)
 
 ## System Requirements
 

@@ -360,6 +360,19 @@ def main() -> None:
     except Exception as e:
         debug_log(f"plugin discovery failed: {e}", "tools")
 
+    # Skills: discover user skills from ~/.jarvis/skills/ (opt-in)
+    try:
+        from .skills.manager import SkillManager
+        _skills_mgr = SkillManager(
+            skills_dir=getattr(cfg, "skills_dir", ""),
+            enabled=getattr(cfg, "skill_system_enabled", False),
+        )
+        _loaded_skills = _skills_mgr.discover()
+        if _loaded_skills:
+            debug_log(f"loaded {_loaded_skills} skill(s)", "skills")
+    except Exception as e:
+        debug_log(f"skill discovery failed: {e}", "skills")
+
     # Initialize dialogue memory with timeout
     print("💾 Initializing dialogue memory...", flush=True)
     _global_dialogue_memory = DialogueMemory(

@@ -6,6 +6,8 @@ who renames the wake word (e.g. "Friday") gets a butler with the matching
 name rather than a persona hardcoded to "Jarvis".
 """
 
+from typing import List, Optional
+
 _SYSTEM_PROMPT_TEMPLATE: str = (
     "Persona: you are a British butler named {name} — polite, composed, quietly amused, and "
     "quietly enjoying yourself. Default voice is dry, witty, and lightly sarcastic: you notice "
@@ -79,11 +81,23 @@ _SYSTEM_PROMPT_TEMPLATE: str = (
 )
 
 
-def build_system_prompt(assistant_name: str = "Jarvis") -> str:
+def build_system_prompt(
+    assistant_name: str = "Jarvis",
+    extra_blocks: Optional[List[str]] = None,
+) -> str:
     """Render the persona prompt with the configured assistant name.
 
     The name comes from the user's wake word (capitalised); defaults to
     "Jarvis" when no config is available (tests, eval harnesses).
+
+    ``extra_blocks`` appends additional context sections (e.g. matched skills,
+    learned instructions) after the persona. Each block is expected to be a
+    self-contained labelled section.
     """
     name = (assistant_name or "Jarvis").strip() or "Jarvis"
-    return _SYSTEM_PROMPT_TEMPLATE.format(name=name)
+    prompt = _SYSTEM_PROMPT_TEMPLATE.format(name=name)
+    if extra_blocks:
+        non_empty = [b for b in extra_blocks if b and b.strip()]
+        if non_empty:
+            prompt = prompt + "\n\n" + "\n\n".join(non_empty)
+    return prompt
