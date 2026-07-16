@@ -998,7 +998,7 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     _router_cache_key = (
         f"router:{redacted}|"
         f"{strategy.value}|"
-        f"{','.join(sorted(BUILTIN_TOOLS.keys() + list(PLUGIN_TOOLS.keys())))}|"
+        f"{','.join(sorted(_all_builtin_names))}|"
         f"{','.join(sorted((mcp_tools or {}).keys()))}"
     )
     _cached_routed = (
